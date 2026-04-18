@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>ShopNest – Sign In</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --coal:      #0a0a0a;
+      --cream:     #0d0d0d;
+      --rust:      #8B0000;
+      --rust-dark: #5c0000;
+      --rust-glow: rgba(139,0,0,0.55);
+      --muted:     #888888;
+      --border:    #2a2a2a;
+      --white:     #f0eded;
+      --sand:      #1c1c1c;
+    }
+
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; color: var(--white); overflow-x: hidden; }
+
+    /* ── DARK GRID BG ── */
+    body {
+      background: #050505;
+      background-image:
+        linear-gradient(rgba(139,0,0,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139,0,0,0.07) 1px, transparent 1px);
+      background-size: 52px 52px;
+      animation: gridDrift 25s linear infinite;
+    }
+    @keyframes gridDrift {
+      from { background-position: 0 0; }
+      to   { background-position: 52px 52px; }
+    }
+
+    /* ── LIGHT PILLAR CANVAS (behind form) ── */
+    #lightPillarCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      opacity: 0.85;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 60px;
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; z-index: 200;
+      animation: topbarIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes topbarIn {
+      from { transform: translateY(-60px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    .topbar-logo {
+      font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700;
+      color: var(--white); text-decoration: none; letter-spacing: -0.5px;
+    }
+    .topbar-logo span { color: var(--rust); }
+    .topbar-nav a {
+      font-size: 13px; font-weight: 500; color: var(--muted);
+      text-decoration: none; margin-left: 28px; transition: color 0.2s;
+    }
+    .topbar-nav a:hover { color: var(--white); }
+    .topbar-nav a.active { color: var(--rust); border-bottom: 2px solid var(--rust); padding-bottom: 2px; }
+
+    /* ── PAGE LAYOUT ── */
+    .page {
+      min-height: 100vh; padding-top: 60px;
+      display: flex; align-items: stretch;
+    }
+
+    /* ══════════════════════════════
+       LEFT PANEL — BOUNCE CARDS
+    ══════════════════════════════ */
+    .panel-left {
+      flex: 0 0 520px;
+      background: var(--coal);
+      position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      overflow: hidden;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* Dramatic glow orbs */
+    .orb {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      filter: blur(80px);
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(192,57,43,0.35) 0%, transparent 70%);
+      top: -120px; right: -120px;
+      animation: orbFloat1 8s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 380px; height: 380px;
+      background: radial-gradient(circle, rgba(192,57,43,0.20) 0%, transparent 70%);
+      bottom: -100px; left: -100px;
+      animation: orbFloat2 10s ease-in-out infinite alternate;
+    }
+    .orb-3 {
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(255,120,80,0.15) 0%, transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      animation: orbPulse 4s ease-in-out infinite;
+    }
+    @keyframes orbFloat1 { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,40px) scale(1.1); } }
+    @keyframes orbFloat2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-20px,-30px) scale(1.08); } }
+    @keyframes orbPulse  { 0%,100% { opacity: 0.6; transform: translate(-50%,-50%) scale(1); } 50% { opacity: 1; transform: translate(-50%,-50%) scale(1.3); } }
+
+    /* Noise grain overlay */
+    .panel-left::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+      pointer-events: none; z-index: 1; opacity: 0.5;
+    }
+
+    /* Top label */
+    .panel-label {
+      position: relative; z-index: 10;
+      text-align: center; margin-bottom: 48px;
+    }
+    .panel-tag {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--rust); border: 1px solid rgba(192,57,43,0.6);
+      padding: 5px 14px; border-radius: 2px; margin-bottom: 18px;
+      background: rgba(192,57,43,0.08);
+    }
+    .panel-headline {
+      font-family: 'Playfair Display', serif; font-size: 38px; line-height: 1.2;
+      color: var(--white); font-weight: 700;
+    }
+    .panel-headline em { color: var(--rust); font-style: italic; display: block; }
+
+    /* ── BOUNCE CARDS CONTAINER ── */
+    .bounce-cards-wrap {
+      position: relative; z-index: 10;
+      width: 480px; height: 300px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .bc {
+      position: absolute;
+      width: 220px; aspect-ratio: 3/4;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 4px solid rgba(255,255,255,0.15);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.05),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+      cursor: pointer;
+      will-change: transform;
+      transform-origin: center bottom;
+    }
+    .bc img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94);
+      display: block;
+    }
+    .bc:hover img { transform: scale(1.08); }
+
+    /* Glossy shine sweep on cards */
+    .bc::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+      z-index: 2; pointer-events: none; border-radius: inherit;
+    }
+
+    /* Price tag on each card */
+    .bc-tag {
+      position: absolute; bottom: 12px; left: 12px; right: 12px;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(8px);
+      border-radius: 10px; padding: 8px 12px;
+      z-index: 3; opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .bc:hover .bc-tag { opacity: 1; transform: translateY(0); }
+    .bc-tag-name { font-size: 11px; font-weight: 600; color: var(--white); letter-spacing: 0.5px; }
+    .bc-tag-price { font-size: 13px; font-weight: 700; color: var(--rust); margin-top: 2px; }
+
+    /* Glow ring on hover */
+    .bc::after {
+      content: '';
+      position: absolute; inset: -3px;
+      border-radius: 22px;
+      background: transparent;
+      border: 2px solid transparent;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      z-index: 4; pointer-events: none;
+    }
+    .bc:hover::after {
+      border-color: var(--rust);
+      box-shadow: 0 0 24px var(--rust-glow), inset 0 0 12px rgba(192,57,43,0.1);
+    }
+
+    /* Bottom perks strip */
+    .panel-perks {
+      position: relative; z-index: 10;
+      display: flex; gap: 24px; margin-top: 52px;
+    }
+    .perk-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 100px; padding: 7px 14px;
+    }
+    .perk-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--rust); flex-shrink: 0;
+      box-shadow: 0 0 8px var(--rust-glow);
+    }
+    .perk-chip span { font-size: 11px; color: rgba(255,255,255,0.55); white-space: nowrap; }
+
+    /* ══════════════════════════════
+       RIGHT PANEL — FORM
+    ══════════════════════════════ */
+    .panel-right {
+      flex: 1; padding: 60px 56px;
+      display: flex; flex-direction: column; justify-content: center;
+      background: #080808;
+      position: relative;
+      overflow: hidden;
+    }
+    .form-eyebrow {
+      font-size: 10px; font-weight: 600; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--rust);
+      margin-bottom: 10px; position: relative; z-index: 2;
+    }
+    .form-title {
+      font-family: 'Playfair Display', serif; font-size: 32px;
+      color: var(--white); margin-bottom: 6px; line-height: 1.2;
+      position: relative; z-index: 2;
+    }
+    .form-sub {
+      font-size: 13px; color: var(--muted); margin-bottom: 36px;
+      position: relative; z-index: 2;
+    }
+    .form-sub a { color: var(--rust); text-decoration: none; font-weight: 500; }
+    .form-sub a:hover { text-decoration: underline; }
+
+    /* Fields */
+    .field { margin-bottom: 22px; position: relative; z-index: 2; }
+    .field label {
+      display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+      transition: color 0.2s;
+    }
+    .field:focus-within label { color: var(--rust); }
+    .field input {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: 15px; font-family: 'DM Sans', sans-serif;
+      color: var(--white); background: rgba(255,255,255,0.04);
+      transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+      outline: none;
+    }
+    .field input::placeholder { color: #444; }
+    .field input:focus {
+      border-color: var(--rust); background: rgba(139,0,0,0.06);
+      box-shadow: 0 0 0 4px rgba(139,0,0,0.12);
+    }
+    .field input.err {
+      border-color: var(--rust); background: rgba(139,0,0,0.1);
+      animation: shake 0.35s ease;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60%  { transform: translateX(-5px); }
+      40%,80%  { transform: translateX(5px); }
+    }
+    .err-msg { font-size: 12px; color: #ff4444; margin-top: 5px; display: none; }
+    .err-msg.show { display: block; }
+
+    /* Password */
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 60px; }
+    .toggle-pass {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 13px; font-family: 'DM Sans', sans-serif;
+      font-weight: 500; padding: 0; transition: color 0.2s;
+    }
+    .toggle-pass:hover { color: var(--white); }
+
+    /* Strength */
+    .strength-wrap { margin-top: 8px; display: none; }
+    .strength-wrap.visible { display: block; }
+    .strength-bar { height: 3px; background: #222; border-radius: 2px; overflow: hidden; }
+    .strength-fill { height: 100%; border-radius: 2px; width: 0%; transition: width 0.4s, background 0.4s; }
+    .strength-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* Checkbox row */
+    .check-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; position: relative; z-index: 2;
+    }
+    .check-label {
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      font-size: 13px; color: var(--muted); user-select: none;
+    }
+    .check-label input[type="checkbox"] {
+      appearance: none; width: 17px; height: 17px;
+      border: 1.5px solid var(--border); border-radius: 4px;
+      cursor: pointer; position: relative; flex-shrink: 0;
+      background: rgba(255,255,255,0.04); transition: border-color 0.2s, background 0.2s;
+    }
+    .check-label input[type="checkbox"]:checked { background: var(--rust); border-color: var(--rust); }
+    .check-label input[type="checkbox"]:checked::after {
+      content: ''; position: absolute;
+      left: 4px; top: 1px; width: 5px; height: 9px;
+      border: 2px solid #fff; border-top: none; border-left: none;
+      transform: rotate(45deg);
+    }
+    .forgot-link { font-size: 13px; color: var(--rust); text-decoration: none; font-weight: 500; }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* Login button */
+    .btn-login {
+      width: 100%; padding: 16px;
+      background: var(--rust); color: var(--white);
+      border: none; border-radius: 6px;
+      font-size: 13px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: background 0.25s, box-shadow 0.25s, transform 0.1s;
+      z-index: 2;
+    }
+    .btn-login::before {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      transition: left 0.5s;
+    }
+    .btn-login:hover::before { left: 100%; }
+    .btn-login:hover { background: var(--rust-dark); box-shadow: 0 8px 32px rgba(139,0,0,0.5); }
+    .btn-login:active { transform: scale(0.98); }
+    .btn-login .btn-text { transition: opacity 0.2s; }
+    .btn-login.loading .btn-text { opacity: 0; }
+    .btn-login .spinner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+    .btn-login.loading .spinner { opacity: 1; }
+    .spinner-ring { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Divider */
+    .divider { display: flex; align-items: center; gap: 14px; margin: 22px 0; position: relative; z-index: 2; }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .divider span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    /* Guest button */
+    .btn-guest {
+      width: 100%; padding: 14px; background: transparent; color: var(--muted);
+      border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; text-decoration: none; display: block; text-align: center;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      position: relative; z-index: 2;
+    }
+    .btn-guest:hover { border-color: var(--rust); color: var(--white); background: rgba(139,0,0,0.08); }
+
+    /* Trust badges */
+    .trust-row {
+      display: flex; gap: 16px; margin-top: 28px; padding-top: 22px;
+      border-top: 1px solid var(--border); position: relative; z-index: 2;
+    }
+    .trust-badge {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 11px; color: var(--muted);
+    }
+    .trust-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 32px; right: 32px;
+      background: #111; color: var(--white);
+      padding: 14px 22px; border-radius: 6px; font-size: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      transform: translateY(80px); opacity: 0;
+      transition: transform 0.35s ease, opacity 0.35s ease;
+      z-index: 999; border-left: 3px solid var(--rust);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Success overlay */
+    .success-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92); z-index: 300;
+      align-items: center; justify-content: center;
+    }
+    .success-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .success-box {
+      background: #111; border: 1px solid var(--border); border-radius: 4px;
+      padding: 56px 52px; text-align: center; max-width: 400px; width: 90%;
+      animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes popIn { from { transform: scale(0.75); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .check-circle {
+      width: 68px; height: 68px; border-radius: 50%; background: var(--rust);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+      box-shadow: 0 0 0 12px rgba(139,0,0,0.15), 0 0 0 24px rgba(139,0,0,0.07);
+      animation: ringPulse 1.5s ease-out;
+    }
+    @keyframes ringPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(139,0,0,0.5); }
+      100% { box-shadow: 0 0 0 28px rgba(139,0,0,0); }
+    }
+    .check-circle svg { width: 34px; height: 34px; }
+    .success-title { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 10px; color: var(--white); }
+    .success-sub { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 30px; }
+    .btn-continue {
+      padding: 13px 36px; background: var(--rust); color: var(--white);
+      border: none; border-radius: 6px; font-size: 13px; font-weight: 700;
+      font-family: 'DM Sans', sans-serif; cursor: pointer;
+      letter-spacing: 1.5px; text-transform: uppercase; transition: background 0.2s;
+    }
+    .btn-continue:hover { background: var(--rust-dark); }
+
+    /* Footer */
+    .footer {
+      text-align: center; padding: 22px 20px; font-size: 12px;
+      color: #444; background: #080808;
+      border-top: 1px solid var(--border);
+    }
+    .footer a { color: #444; text-decoration: none; margin: 0 8px; }
+    .footer a:hover { color: var(--rust); }
+
+    @media (max-width: 900px) {
+      .panel-left { display: none; }
+      .panel-right { padding: 40px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <nav class="topbar">
+    <a href="index.html" class="topbar-logo">Shop<span>Nest</span></a>
+    <div class="topbar-nav">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="login.html" class="active">Sign In</a>
+      <a href="signup.html">Register</a>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- ════════════ LEFT PANEL ════════════ -->
+    <div class="panel-left">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+
+      <!-- Label -->
+      <div class="panel-label">
+        <div class="panel-tag">New Arrivals</div>
+        <h2 class="panel-headline">
+          Shop the<br>
+          <em>season's best.</em>
+        </h2>
+      </div>
+
+      <!-- ── BOUNCE CARDS ── -->
+      <div class="bounce-cards-wrap" id="bounceWrap">
+
+        <div class="bc bc-0" style="transform: rotate(12deg) translate(-190px, 10px);">
+          <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=533&fit=crop" alt="Watch">
+          <div class="bc-tag">
+            <div class="bc-tag-name">Luxury Watch</div>
+            <div class="bc-tag-price">$349</div>
+          </div>
+        </div>
+
+        <div class="bc bc-1" style="transform: rotate(5deg) translate(-90px, -15px);">
+          <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=533&fit=crop" alt="Sneakers">
+          <div class="bc-tag">
+            <div class="bc-tag-name">Air Runners</div>
+            <div class="bc-tag-price">$129</div>
+          </div>
+        </div>
+
+        <div class="bc bc-2" style="transform: rotate(-4deg) translate(0px, 5px); z-index: 5;">
+          <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&h=533&fit=crop" alt="Bag">
+          <div class="bc-tag">
+            <div class="bc-tag-name">Leather Bag</div>
+            <div class="bc-tag-price">$219</div>
+          </div>
+        </div>
+
+        <div class="bc bc-3" style="transform: rotate(-6deg) translate(90px, -10px);">
+          <img src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&h=533&fit=crop" alt="Perfume">
+          <div class="bc-tag">
+            <div class="bc-tag-name">Noir Eau</div>
+            <div class="bc-tag-price">$89</div>
+          </div>
+        </div>
+
+        <div class="bc bc-4" style="transform: rotate(8deg) translate(185px, 8px);">
+          <img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&h=533&fit=crop" alt="Sunglasses">
+          <div class="bc-tag">
+            <div class="bc-tag-name">Pro Runners</div>
+            <div class="bc-tag-price">$165</div>
+          </div>
+        </div>
+
+      </div>
+      <!-- end bounce cards -->
+
+      <!-- Perks strip -->
+      <div class="panel-perks">
+        <div class="perk-chip"><div class="perk-dot"></div><span>Free Shipping $50+</span></div>
+        <div class="perk-chip"><div class="perk-dot"></div><span>Member Deals</span></div>
+        <div class="perk-chip"><div class="perk-dot"></div><span>Easy Returns</span></div>
+      </div>
+    </div>
+
+    <!-- ════════════ RIGHT PANEL ════════════ -->
+    <div class="panel-right">
+      <canvas id="lightPillarCanvas"></canvas>
+      <div style="position:relative;z-index:2;width:100%;">
+      <div class="form-eyebrow">Member Access</div>
+      <h1 class="form-title">Welcome back</h1>
+      <p class="form-sub">
+        New to ShopNest?
+        <a href="signup.html">Create a free account</a>
+      </p>
+
+      <form id="loginForm" action="#" method="post" novalidate>
+
+        <div class="field">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email"
+            placeholder="you@example.com" autocomplete="email">
+          <div class="err-msg" id="emailError">Please enter a valid email address.</div>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="pass-wrap">
+            <input type="password" id="password" name="password"
+              placeholder="Enter your password" autocomplete="current-password">
+            <button type="button" class="toggle-pass" id="togglePass">Show</button>
+          </div>
+          <div class="strength-wrap" id="strengthWrap">
+            <div class="strength-bar">
+              <div class="strength-fill" id="strengthFill"></div>
+            </div>
+            <div class="strength-label" id="strengthLabel">Strength: --</div>
+          </div>
+          <div class="err-msg" id="passError">Password must be at least 6 characters.</div>
+        </div>
+
+        <div class="check-row">
+          <label class="check-label">
+            <input type="checkbox" id="remember" name="remember">
+            Remember me
+          </label>
+          <a href="forgot.html" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span class="btn-text">Sign In</span>
+          <span class="spinner"><div class="spinner-ring"></div></span>
+        </button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span>or continue without an account</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <a href="shop.html" class="btn-guest">Browse as Guest</a>
+
+        <!-- Trust badges -->
+        <div class="trust-row">
+          <div class="trust-badge"><div class="trust-icon">&#128274;</div>256-bit SSL</div>
+          <div class="trust-badge"><div class="trust-icon">&#9989;</div>Secure checkout</div>
+          <div class="trust-badge"><div class="trust-icon">&#128715;</div>Privacy safe</div>
+        </div>
+
+      </form>
+      </div><!-- /z-index wrapper -->
+    </div><!-- /panel-right -->
+
+  </div><!-- /page -->
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="help.html">Help</a>
+    <a href="https://www.shopify.com" target="_blank">ShopNest Inc.</a>
+    &nbsp;&nbsp;&copy; 2025 ShopNest. All rights reserved.
+  </footer>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- SUCCESS OVERLAY -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <div class="check-circle">
+        <svg viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="7,18 14,25 27,10" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="success-title">You are signed in</h2>
+      <p class="success-sub">Welcome back to ShopNest. Redirecting you to your personal dashboard.</p>
+      <button class="btn-continue" onclick="document.getElementById('successOverlay').classList.remove('show')">
+        Continue Shopping
+      </button>
+    </div>
+  </div>
+
+  <script>
+  // ═══════════════════════════════════════
+  //  BOUNCE CARDS — GSAP ANIMATION ENGINE
+  // ═══════════════════════════════════════
+  (function () {
+    var cards = document.querySelectorAll('.bc');
+    var wrap  = document.getElementById('bounceWrap');
+
+    // Base transforms for each card
+    var baseTransforms = [
+      'rotate(12deg) translate(-190px, 10px)',
+      'rotate(5deg) translate(-90px, -15px)',
+      'rotate(-4deg) translate(0px, 5px)',
+      'rotate(-6deg) translate(90px, -10px)',
+      'rotate(8deg) translate(185px, 8px)'
+    ];
+
+    // Entry bounce animation — cards fly in from scale(0)
+    gsap.fromTo(cards,
+      { scale: 0, opacity: 0 },
+      {
+        scale: 1, opacity: 1,
+        stagger: 0.10,
+        ease: 'elastic.out(1, 0.45)',
+        delay: 0.4,
+        duration: 1.4
+      }
+    );
+
+    // Idle floating animation per card
+    cards.forEach(function (card, i) {
+      gsap.to(card, {
+        y: (i % 2 === 0 ? -12 : 10),
+        duration: 2.2 + i * 0.3,
+        ease: 'sine.inOut',
+        repeat: -1,
+        yoyo: true,
+        delay: i * 0.18
+      });
+    });
+
+    // Helper: strip rotate from a transform string
+    function noRotation(t) {
+      return t.replace(/rotate\([^)]*\)/, 'rotate(0deg)');
+    }
+
+    // Helper: push translate X by offsetX
+    function pushTranslate(t, offsetX) {
+      var m = t.match(/translate\(([-0-9.]+)px,\s*([-0-9.]+)px\)/);
+      if (m) {
+        var nx = parseFloat(m[1]) + offsetX;
+        return t.replace(/translate\([^)]*\)/, 'translate(' + nx + 'px, ' + m[2] + 'px)');
+      }
+      return t + ' translate(' + offsetX + 'px, 0px)';
+    }
+
+    // Hover — push siblings, flatten hovered card
+    cards.forEach(function (card, hovIdx) {
+      card.addEventListener('mouseenter', function () {
+        cards.forEach(function (c, i) {
+          gsap.killTweensOf(c, 'transform');
+          if (i === hovIdx) {
+            // Flatten the hovered card + scale up + glow lift
+            gsap.to(c, {
+              transform: noRotation(baseTransforms[i]),
+              scale: 1.10,
+              y: -20,
+              duration: 0.45,
+              ease: 'back.out(1.6)',
+              overwrite: 'auto'
+            });
+          } else {
+            var dist   = Math.abs(hovIdx - i);
+            var offset = i < hovIdx ? -180 : 180;
+            gsap.to(c, {
+              transform: pushTranslate(baseTransforms[i], offset),
+              scale: 0.90,
+              duration: 0.4,
+              ease: 'back.out(1.4)',
+              delay: dist * 0.04,
+              overwrite: 'auto'
+            });
+          }
+        });
+      });
+
+      card.addEventListener('mouseleave', function () {
+        cards.forEach(function (c, i) {
+          gsap.killTweensOf(c, 'transform');
+          gsap.to(c, {
+            transform: baseTransforms[i],
+            scale: 1,
+            y: 0,
+            duration: 0.5,
+            ease: 'elastic.out(1, 0.6)',
+            overwrite: 'auto'
+          });
+        });
+        // Re-start idle float
+        cards.forEach(function (c, i) {
+          gsap.to(c, {
+            y: (i % 2 === 0 ? -12 : 10),
+            duration: 2.2 + i * 0.3,
+            ease: 'sine.inOut',
+            repeat: -1,
+            yoyo: true,
+            delay: 0.5 + i * 0.18
+          });
+        });
+      });
+    });
+  })();
+
+  // ═══════════════════════════════════════════
+  //  LIGHT PILLAR — THREE.JS WEBGL BACKGROUND
+  //  Blood Red (#8B0000) + Black palette
+  // ═══════════════════════════════════════════
+  (function () {
+    var canvas    = document.getElementById('lightPillarCanvas');
+    var container = canvas.parentElement;
+
+    // Size canvas to match parent
+    function resize() {
+      canvas.width  = container.clientWidth;
+      canvas.height = container.clientHeight;
+    }
+    resize();
+
+    var renderer, material, scene, camera, geometry;
+    var timeVal = 0;
+    var raf;
+
+    try {
+      renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        antialias: false,
+        alpha: true,
+        powerPreference: 'high-performance',
+        stencil: false,
+        depth: false
+      });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    } catch (e) { return; }
+
+    scene  = new THREE.Scene();
+    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    var parseColor = function (hex) {
+      var c = new THREE.Color(hex);
+      return new THREE.Vector3(c.r, c.g, c.b);
+    };
+
+    var vertexShader = [
+      'varying vec2 vUv;',
+      'void main() {',
+      '  vUv = uv;',
+      '  gl_Position = vec4(position, 1.0);',
+      '}'
+    ].join('\n');
+
+    var fragmentShader = [
+      'precision highp float;',
+      'uniform float uTime;',
+      'uniform vec2  uResolution;',
+      'uniform vec3  uTopColor;',
+      'uniform vec3  uBottomColor;',
+      'uniform float uIntensity;',
+      'uniform float uGlowAmount;',
+      'uniform float uPillarWidth;',
+      'uniform float uPillarHeight;',
+      'uniform float uNoiseIntensity;',
+      'uniform float uRotCos;',
+      'uniform float uRotSin;',
+      'uniform float uWaveSin;',
+      'uniform float uWaveCos;',
+      'varying vec2 vUv;',
+      'const int MAX_ITER = 80;',
+      'const int WAVE_ITER = 4;',
+      'void main() {',
+      '  vec2 uv = (vUv * 2.0 - 1.0) * vec2(uResolution.x / uResolution.y, 1.0);',
+      '  vec3 ro = vec3(0.0, 0.0, -10.0);',
+      '  vec3 rd = normalize(vec3(uv, 1.0));',
+      '  float rotC = uRotCos;',
+      '  float rotS = uRotSin;',
+      '  vec3 col = vec3(0.0);',
+      '  float t = 0.1;',
+      '  for(int i = 0; i < MAX_ITER; i++) {',
+      '    vec3 p = ro + rd * t;',
+      '    p.xz = vec2(rotC * p.x - rotS * p.z, rotS * p.x + rotC * p.z);',
+      '    vec3 q = p;',
+      '    q.y = p.y * uPillarHeight + uTime;',
+      '    float freq = 1.0; float amp = 1.0;',
+      '    for(int j = 0; j < WAVE_ITER; j++) {',
+      '      q.xz = vec2(uWaveCos * q.x - uWaveSin * q.z, uWaveSin * q.x + uWaveCos * q.z);',
+      '      q += cos(q.zxy * freq - uTime * float(j) * 2.0) * amp;',
+      '      freq *= 2.0; amp *= 0.5;',
+      '    }',
+      '    float d = length(cos(q.xz)) - 0.2;',
+      '    float bound = length(p.xz) - uPillarWidth;',
+      '    float k = 4.0;',
+      '    float h = max(k - abs(d - bound), 0.0);',
+      '    d = max(d, bound) + h * h * 0.0625 / k;',
+      '    d = abs(d) * 0.15 + 0.01;',
+      '    float grad = clamp((15.0 - p.y) / 30.0, 0.0, 1.0);',
+      '    col += mix(uBottomColor, uTopColor, grad) / d;',
+      '    t += d * 1.0;',
+      '    if(t > 50.0) break;',
+      '  }',
+      '  float widthNorm = uPillarWidth / 3.0;',
+      '  col = tanh(col * uGlowAmount / widthNorm);',
+      '  col -= fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) / 15.0 * uNoiseIntensity;',
+      '  gl_FragColor = vec4(col * uIntensity, 1.0);',
+      '}'
+    ].join('\n');
+
+    var waveSin = Math.sin(0.4);
+    var waveCos = Math.cos(0.4);
+
+    material = new THREE.ShaderMaterial({
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      uniforms: {
+        uTime:          { value: 0 },
+        uResolution:    { value: new THREE.Vector2(container.clientWidth, container.clientHeight) },
+        uTopColor:      { value: parseColor('#8B0000') },   // blood red top
+        uBottomColor:   { value: parseColor('#1a0000') },   // near-black red bottom
+        uIntensity:     { value: 1.2 },
+        uGlowAmount:    { value: 0.006 },
+        uPillarWidth:   { value: 2.8 },
+        uPillarHeight:  { value: 0.35 },
+        uNoiseIntensity:{ value: 0.4 },
+        uRotCos:        { value: 1.0 },
+        uRotSin:        { value: 0.0 },
+        uWaveSin:       { value: waveSin },
+        uWaveCos:       { value: waveCos }
+      },
+      transparent: true,
+      depthWrite: false,
+      depthTest: false
+    });
+
+    geometry = new THREE.PlaneGeometry(2, 2);
+    scene.add(new THREE.Mesh(geometry, material));
+
+    var lastTime = performance.now();
+    function animate(now) {
+      var delta = now - lastTime;
+      if (delta >= 16) {
+        timeVal += 0.016 * 0.28;  // rotationSpeed = 0.28
+        material.uniforms.uTime.value    = timeVal;
+        material.uniforms.uRotCos.value  = Math.cos(timeVal * 0.3);
+        material.uniforms.uRotSin.value  = Math.sin(timeVal * 0.3);
+        renderer.render(scene, camera);
+        lastTime = now;
+      }
+      raf = requestAnimationFrame(animate);
+    }
+    raf = requestAnimationFrame(animate);
+
+    // Resize handler
+    var resizeTimeout;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(function () {
+        var w = container.clientWidth;
+        var h = container.clientHeight;
+        renderer.setSize(w, h);
+        material.uniforms.uResolution.value.set(w, h);
+      }, 150);
+    }, { passive: true });
+  })();
+
+  var passInput    = document.getElementById('password');
+  var toggleBtn    = document.getElementById('togglePass');
+  var strengthWrap = document.getElementById('strengthWrap');
+  var strengthFill = document.getElementById('strengthFill');
+  var strengthLabel= document.getElementById('strengthLabel');
+  var emailInput   = document.getElementById('email');
+  var loginBtn     = document.getElementById('loginBtn');
+  var form         = document.getElementById('loginForm');
+
+  // Show/hide password
+  toggleBtn.addEventListener('click', function () {
+    var hidden = passInput.type === 'password';
+    passInput.type = hidden ? 'text' : 'password';
+    this.textContent = hidden ? 'Hide' : 'Show';
+  });
+
+  // Password strength
+  passInput.addEventListener('input', function () {
+    if (!this.value) { strengthWrap.classList.remove('visible'); return; }
+    strengthWrap.classList.add('visible');
+    var s = 0;
+    if (this.value.length >= 8)           s++;
+    if (/[A-Z]/.test(this.value))         s++;
+    if (/[0-9]/.test(this.value))         s++;
+    if (/[^A-Za-z0-9]/.test(this.value))  s++;
+    var lvls = [
+      { pct:'20%',  clr:'#e74c3c', lbl:'Very weak'   },
+      { pct:'40%',  clr:'#e67e22', lbl:'Weak'         },
+      { pct:'65%',  clr:'#f1c40f', lbl:'Fair'         },
+      { pct:'85%',  clr:'#2ecc71', lbl:'Strong'       },
+      { pct:'100%', clr:'#27ae60', lbl:'Very strong'  }
+    ];
+    var l = lvls[Math.min(s, lvls.length - 1)];
+    strengthFill.style.width      = l.pct;
+    strengthFill.style.background = l.clr;
+    strengthLabel.textContent     = 'Strength: ' + l.lbl;
+  });
+
+  // Email validation
+  emailInput.addEventListener('blur', function () {
+    var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value.trim());
+    if (this.value && !ok) {
+      this.classList.add('err');
+      document.getElementById('emailError').classList.add('show');
+    } else {
+      this.classList.remove('err');
+      document.getElementById('emailError').classList.remove('show');
+    }
+  });
+  emailInput.addEventListener('input', function () {
+    this.classList.remove('err');
+    document.getElementById('emailError').classList.remove('show');
+  });
+
+  // Form submit
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = emailInput.value.trim();
+    var pass  = passInput.value;
+    var ok    = true;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      emailInput.classList.add('err');
+      document.getElementById('emailError').classList.add('show');
+      ok = false;
+    }
+    if (pass.length < 6) {
+      passInput.classList.add('err');
+      document.getElementById('passError').classList.add('show');
+      ok = false;
+    } else {
+      passInput.classList.remove('err');
+      document.getElementById('passError').classList.remove('show');
+    }
+    if (!ok) { showToast('Please fix the errors above.'); return; }
+
+    loginBtn.classList.add('loading');
+    loginBtn.disabled = true;
+    setTimeout(function () {
+      loginBtn.classList.remove('loading');
+      loginBtn.disabled = false;
+      document.getElementById('successOverlay').classList.add('show');
+    }, 1800);
+  });
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 3000);
+  }
+
+  // Field micro-lift on focus
+  document.querySelectorAll('.field input[type="email"], .field input[type="password"]').forEach(function (inp) {
+    inp.addEventListener('focus', function () {
+      this.closest('.field').style.transition = 'transform 0.2s';
+      this.closest('.field').style.transform  = 'translateY(-2px)';
+    });
+    inp.addEventListener('blur', function () {
+      this.closest('.field').style.transform = 'translateY(0)';
+    });
+  });
+  </script>
+</body>
+</html>
